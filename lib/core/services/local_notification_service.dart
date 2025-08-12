@@ -137,7 +137,6 @@ class LocalNotificationService {
       type: notificationType,
       data: data,
       receivedAt: DateTime.now(),
-      isActionable: false, // Not needed for navigation
     );
 
     // Navigate using the notification model

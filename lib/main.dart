@@ -13,7 +13,11 @@ import 'features/profile/view/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase with default options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize app preferences
   await AppPrefs.instance.init();
 
   // Initialize local notifications
@@ -22,7 +26,8 @@ void main() async {
   // Initialize FCM and persist token
   final fcmService = FcmService();
 
-  // Register background message handler early
+  // Register background message handler
+  // This is called when the app is in the background or terminated
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // Setup lifecycle listeners
@@ -43,7 +48,7 @@ class MyApp extends StatelessWidget {
           seedColor: const Color.fromARGB(255, 155, 145, 171),
         ),
       ),
-      navigatorKey: navigatorKey,
+      navigatorKey: navigatorKey, // Navigator key for managing navigation
       routes: {
         '/': (_) => const HomePage(),
         '/friendRequests': (_) => const FriendRequestsScreen(),
