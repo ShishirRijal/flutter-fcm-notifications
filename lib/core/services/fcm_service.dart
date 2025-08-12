@@ -5,6 +5,7 @@ import 'package:app_notifications/firebase_options.dart';
 import 'app_prefs.dart';
 import 'local_notification_service.dart';
 import '../navigation/app_router.dart';
+import '../models/push_notification_model.dart';
 
 class FcmService {
   FcmService();
@@ -77,28 +78,32 @@ class FcmService {
 
     // Listen in foreground
     FirebaseMessaging.onMessage.listen((message) {
-      debugPrint('FCM onMessage (foreground): ${message.toMap()}');
+      final notification = PushNotificationModel.fromRemoteMessage(message);
+      debugPrint('FCM onMessage (foreground): $notification');
+
       // Show local notification when app is in foreground
-      LocalNotificationService().showNotificationFromFCM(message);
+      LocalNotificationService().showNotificationFromModel(notification);
     });
 
     // App opened from background via notification tap
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final notification = PushNotificationModel.fromRemoteMessage(message);
       debugPrint(
-        'FCM onMessageOpenedApp (background->foreground): ${message.toMap()}',
+        'FCM onMessageOpenedApp (background->foreground): $notification',
       );
-      // Navigate based on notification data
-      NotificationRouter.handleMessage(message);
+
+      // Navigate based on notification model
+      NotificationRouter.handleNotification(notification);
     });
 
     // App opened from terminated via notification tap
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial != null) {
-      debugPrint(
-        'FCM getInitialMessage (terminated->opened): ${initial.messageId}',
-      );
-      // Navigate based on notification data
-      NotificationRouter.handleMessage(initial);
+      final notification = PushNotificationModel.fromRemoteMessage(initial);
+      debugPrint('FCM getInitialMessage (terminated->opened): $notification');
+
+      // Navigate based on notification model
+      NotificationRouter.handleNotification(notification);
     }
   }
 }

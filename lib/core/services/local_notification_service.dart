@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import '../navigation/app_router.dart';
+import '../models/push_notification_model.dart';
 
 class LocalNotificationService {
   static final LocalNotificationService _instance =
@@ -61,20 +62,24 @@ class LocalNotificationService {
         ?.createNotificationChannel(channel);
   }
 
-  Future<void> showNotificationFromFCM(RemoteMessage message) async {
-    const AndroidNotificationDetails androidNotificationDetails =
-        AndroidNotificationDetails(
-          'high_importance_channel',
-          'High Importance Notifications',
-          channelDescription:
-              'This channel is used for important notifications.',
-          importance: Importance.high,
-          priority: Priority.high,
-          showWhen: false,
-          enableLights: true, // Turn on notification light
-          enableVibration: true, // Enable vibration
-          fullScreenIntent: true, // Wake up screen on Android
-        );
+  Future<void> showNotificationFromModel(
+    PushNotificationModel notification,
+  ) async {
+    final androidNotificationDetails = AndroidNotificationDetails(
+      'high_importance_channel',
+      'High Importance Notifications',
+      channelDescription: 'This channel is used for important notifications.',
+      importance: notification.shouldShowHeadsUp
+          ? Importance.high
+          : Importance.defaultImportance,
+      priority: notification.shouldShowHeadsUp
+          ? Priority.high
+          : Priority.defaultPriority,
+      showWhen: false,
+      enableLights: notification.shouldWakeScreen,
+      enableVibration: notification.shouldWakeScreen,
+      fullScreenIntent: notification.shouldWakeScreen,
+    );
 
     const DarwinNotificationDetails iosNotificationDetails =
         DarwinNotificationDetails(
@@ -83,27 +88,32 @@ class LocalNotificationService {
           presentSound: true,
         );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
+    final NotificationDetails notificationDetails = NotificationDetails(
       android: androidNotificationDetails,
       iOS: iosNotificationDetails,
     );
 
-    // Create payload from FCM data
-    final payload = _createPayload(message.data);
+    // Create payload from notification model
+    final payload = _createPayloadFromModel(notification);
 
     await _flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Use timestamp as ID
-      message.notification?.title ?? 'New Notification',
-      message.notification?.body ?? 'You have a new message',
+      notification.id.hashCode, // Use notification ID hash as unique identifier
+      notification.title,
+      notification.body,
       notificationDetails,
       payload: payload,
     );
   }
 
-  String _createPayload(Map<String, dynamic> data) {
-    // Convert data to a simple string format for payload
-    // In a real app, you might want to use JSON encoding
-    return data.entries.map((e) => '${e.key}=${e.value}').join('&');
+  // Keep the old method for backward compatibility
+  Future<void> showNotificationFromFCM(RemoteMessage message) async {
+    final notification = PushNotificationModel.fromRemoteMessage(message);
+    await showNotificationFromModel(notification);
+  }
+
+  String _createPayloadFromModel(PushNotificationModel notification) {
+    // Convert notification model to a simple string format for payload
+    return 'id=${notification.id}&type=${notification.type.value}&${notification.data.entries.map((e) => '${e.key}=${e.value}').join('&')}';
   }
 
   void _handleNotificationTap(String payload) {

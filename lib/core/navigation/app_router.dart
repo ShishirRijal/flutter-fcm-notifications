@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import '../models/push_notification_model.dart';
 
 class AppRoutes {
   static const home = '/';
@@ -11,10 +13,39 @@ class AppRoutes {
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class NotificationRouter {
+  /// Entry point to handle navigation for a PushNotificationModel.
+  static Future<void> handleNotification(
+    PushNotificationModel notification,
+  ) async {
+    debugPrint('Handling notification: $notification');
+    await navigateFromNotification(notification);
+  }
+
   /// Entry point to handle navigation for an incoming RemoteMessage.
   static Future<void> handleMessage(RemoteMessage message) async {
-    final data = message.data;
-    await navigateFromData(data);
+    final notification = PushNotificationModel.fromRemoteMessage(message);
+    await handleNotification(notification);
+  }
+
+  /// Navigate based on notification model
+  static Future<void> navigateFromNotification(
+    PushNotificationModel notification,
+  ) async {
+    // Wait for navigator to be ready, with timeout
+    await _waitForNavigator();
+
+    final nav = navigatorKey.currentState;
+    if (nav == null) {
+      debugPrint('Navigator still not available after waiting');
+      return;
+    }
+
+    debugPrint(
+      'Navigating to: ${notification.routePath} with data: ${notification.data}',
+    );
+
+    // Use the route path from the notification model
+    nav.pushNamed(notification.routePath, arguments: notification.data);
   }
 
   /// Navigate to the appropriate route from a raw data map.
