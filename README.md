@@ -158,20 +158,31 @@ lib/
 ### 1. App Lifecycle States
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Foreground: App Active
-    Foreground --> Background: App Minimized
-    Background --> Terminated: App Killed
-    Background --> Foreground: App Resumed
-    Terminated --> Foreground: App Launched
-
-    Foreground --> LocalNotification: FCM Message
-    Background --> SystemNotification: FCM Message
-    Terminated --> SystemNotification: FCM Message
-
-    LocalNotification --> Navigate: User Taps
-    SystemNotification --> Navigate: User Taps
-    Navigate --> TargetScreen: Based on Data
+flowchart TD
+    Start([App Start]) --> Foreground[Foreground]
+    Foreground --> |App Minimized| Background[Background]
+    Background --> |App Killed| Terminated[Terminated]
+    Background --> |App Resumed| Foreground
+    Terminated --> |App Launched| Foreground
+    
+    Foreground --> |FCM Message| LocalNotification[LocalNotification]
+    Background --> |FCM Message| SystemNotification[SystemNotification]
+    Terminated --> |FCM Message| SystemNotification
+    
+    LocalNotification --> |User Taps| Navigate[Navigate]
+    SystemNotification --> |User Taps| Navigate
+    Navigate --> |Based on Data| TargetScreen[TargetScreen]
+    
+    %% Color coding by functional groups
+    classDef appStates fill:#90EE90,stroke:#333,stroke-width:2px,color:#000
+    classDef notifications fill:#FFA500,stroke:#333,stroke-width:2px,color:#000
+    classDef navigation fill:#9370DB,stroke:#333,stroke-width:2px,color:#fff
+    classDef inactive fill:#D3D3D3,stroke:#333,stroke-width:2px,color:#000
+    
+    class Foreground,Background appStates
+    class Terminated inactive
+    class LocalNotification,SystemNotification notifications
+    class Navigate,TargetScreen navigation
 ```
 
 ### 2. Notification Data Structure
