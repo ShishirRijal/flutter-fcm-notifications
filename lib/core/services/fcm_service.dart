@@ -108,8 +108,8 @@ class FcmService {
   }
 }
 
-// Top-level background handler (required by Firebase Messaging).
-// Ensure this symbol is preserved by the compiler/tree-shaker.
+// Top-level background handler
+// It is important that this symbol is preserved by the compiler/tree-shaker.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Initialize Firebase in the background isolate.

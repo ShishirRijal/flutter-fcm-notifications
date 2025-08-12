@@ -1,9 +1,9 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import '../navigation/app_router.dart';
 import '../models/push_notification_model.dart';
 
+/// Service to manage [local notifications]
 class LocalNotificationService {
   static final LocalNotificationService _instance =
       LocalNotificationService._internal();
@@ -45,11 +45,17 @@ class LocalNotificationService {
     await _createNotificationChannel();
   }
 
+  // Notification channel configuration
+  static const String _channelId = 'high_importance_channel';
+  static const String _channelName = 'High Importance Notifications';
+  static const String _channelDescription =
+      'This channel is used for important notifications.';
+
   Future<void> _createNotificationChannel() async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel',
-      'High Importance Notifications',
-      description: 'This channel is used for important notifications.',
+      _channelId,
+      _channelName,
+      description: _channelDescription,
       importance: Importance.high,
       enableLights: true, // Turn on LED light
       enableVibration: true, // Enable vibration
@@ -66,9 +72,9 @@ class LocalNotificationService {
     PushNotificationModel notification,
   ) async {
     final androidNotificationDetails = AndroidNotificationDetails(
-      'high_importance_channel',
-      'High Importance Notifications',
-      channelDescription: 'This channel is used for important notifications.',
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
       importance: notification.shouldShowHeadsUp
           ? Importance.high
           : Importance.defaultImportance,
@@ -105,19 +111,13 @@ class LocalNotificationService {
     );
   }
 
-  // Keep the old method for backward compatibility
-  Future<void> showNotificationFromFCM(RemoteMessage message) async {
-    final notification = PushNotificationModel.fromRemoteMessage(message);
-    await showNotificationFromModel(notification);
-  }
-
   String _createPayloadFromModel(PushNotificationModel notification) {
     // Convert notification model to a simple string format for payload
     return 'id=${notification.id}&type=${notification.type.value}&${notification.data.entries.map((e) => '${e.key}=${e.value}').join('&')}';
   }
 
   void _handleNotificationTap(String payload) {
-    // Parse payload back to data map
+    // Parse payload back to notification model data
     final data = <String, dynamic>{};
     for (final pair in payload.split('&')) {
       final parts = pair.split('=');
@@ -126,7 +126,21 @@ class LocalNotificationService {
       }
     }
 
-    // Navigate using the same router logic
-    NotificationRouter.navigateFromData(data);
+    // Create a notification model from the parsed data and navigate
+    final notificationType = NotificationType.fromString(
+      data['type'] ?? 'unknown',
+    );
+    final notification = PushNotificationModel(
+      id: data['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      title: '', // Not needed for navigation
+      body: '', // Not needed for navigation
+      type: notificationType,
+      data: data,
+      receivedAt: DateTime.now(),
+      isActionable: false, // Not needed for navigation
+    );
+
+    // Navigate using the notification model
+    NotificationRouter.handleNotification(notification);
   }
 }
