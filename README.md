@@ -309,49 +309,6 @@ const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
 );
 ```
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **No notifications received**
-
-   - Check FCM token in debug logs
-   - Verify Firebase project configuration
-   - Check device notification permissions
-
-2. **Navigation not working**
-
-   - Ensure MaterialApp has navigatorKey
-   - Check notification data format
-   - Verify route registration
-
-3. **Build errors**
-
-   - Run `flutter clean && flutter pub get`
-   - Check Android compileSdk version
-   - Verify core library desugaring setup
-
-4. **Screen not waking up**
-   - Check `android:showWhenLocked="true"` in manifest
-   - Verify `fullScreenIntent: true` in notification details
-   - Test on physical device (emulator limitations)
-
-## 📚 Resources
-
-- [Firebase Messaging Documentation](https://firebase.google.com/docs/cloud-messaging)
-- [Flutter Local Notifications](https://pub.dev/packages/flutter_local_notifications)
-- [Firebase Console](https://console.firebase.google.com/)
-
-## 🎯 Next Steps
-
-Potential enhancements for this project:
-
-- Add notification scheduling
-- Implement notification categories
-- Add rich media notifications (images, actions)
-- Integrate with backend notification service
-- Add notification history/persistence
-
 ---
 
-Built with ❤️ using Flutter & Firebase
+Built with ❤️ by Shishir Rijal using Flutter & Firebase
