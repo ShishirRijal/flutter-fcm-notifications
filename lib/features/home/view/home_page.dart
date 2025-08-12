@@ -1,4 +1,3 @@
-import 'package:app_notifications/core/services/fcm_service.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -10,21 +9,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
-  void initState() {
-    super.initState();
-    fetchFcmToken();
-  }
-
-  void fetchFcmToken() async {
-    String? token = await FcmService().fetchFcmToken();
-    if (token != null) {
-      print("FCM Token: $token");
-    } else {
-      print("Failed to get FCM token.");
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -33,12 +17,70 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.deepPurple,
       ),
       body: Center(
-        child: Text(
-          'Welcome to the Home Page!',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.blueAccent,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Welcome to the Home Page!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
+                ),
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                height: 55,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Colors.blueAccent, // Custom color for the button
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/friendRequests'),
+                  child: const Text('Friend Requests'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 55,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Colors.green, // Custom color for the button
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/chat',
+                    arguments: {'chatId': 'demo123'},
+                  ),
+                  child: const Text('Chat'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 55,
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red, // Custom color for the button
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/profile',
+                    arguments: {'userId': 'user456'},
+                  ),
+                  child: const Text('Profile'),
+                ),
+              ),
+            ],
           ),
         ),
       ),

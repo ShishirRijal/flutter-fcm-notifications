@@ -4,12 +4,20 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'core/services/app_prefs.dart';
 import 'core/services/fcm_service.dart';
+import 'core/services/local_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'core/navigation/app_router.dart';
+import 'features/chat/view/chat_screen.dart';
+import 'features/friend_requests/view/friend_requests_screen.dart';
+import 'features/profile/view/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppPrefs.instance.init();
+
+  // Initialize local notifications
+  await LocalNotificationService().initialize();
 
   // Initialize FCM and persist token
   final fcmService = FcmService();
@@ -18,17 +26,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // Setup lifecycle listeners
-  await fcmService.initializeListeners(
-    onForeground: (message) {
-      debugPrint(
-        'Foreground notification: \\nTitle: ${message.notification?.title}\nBody: ${message.notification?.body}\nData: ${message.data}',
-      );
-    },
-    onOpenedApp: (message) {
-      debugPrint('Opened from notification: ${message.data}');
-      // Navigate to the profile screen based on data
-    },
-  );
+  await fcmService.initializeListeners();
 
   runApp(const MyApp());
 }
@@ -41,9 +39,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Notifications',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 155, 145, 171),
+        ),
       ),
-      home: const HomePage(),
+      navigatorKey: navigatorKey,
+      routes: {
+        '/': (_) => const HomePage(),
+        '/friendRequests': (_) => const FriendRequestsScreen(),
+        '/chat': (_) => const ChatScreen(),
+        '/profile': (_) => const ProfileScreen(),
+      },
     );
   }
 }

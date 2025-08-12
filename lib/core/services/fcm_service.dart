@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:app_notifications/firebase_options.dart';
 import 'app_prefs.dart';
+import 'local_notification_service.dart';
+import '../navigation/app_router.dart';
 
 class FcmService {
   FcmService();
@@ -11,9 +13,7 @@ class FcmService {
   // [Fetch] FCM token from Firebase
   Future<String?> fetchFcmToken() async {
     final status = await FirebaseMessaging.instance.getNotificationSettings();
-    print(
-      "Firebase Notification Settings Status: ${status.authorizationStatus}",
-    );
+
     if (status.authorizationStatus == AuthorizationStatus.authorized) {
       try {
         String? token = await FirebaseMessaging.instance.getToken();
@@ -46,23 +46,27 @@ class FcmService {
   /// - Background (app in background and user taps): FirebaseMessaging.onMessageOpenedApp
   /// - Terminated (app killed and opened via tap): getInitialMessage
   /// Also persists token and listens for token refresh.
-  Future<void> initializeListeners({
-    void Function(RemoteMessage message)? onForeground,
-    void Function(RemoteMessage message)? onOpenedApp,
-  }) async {
+  Future<void> initializeListeners() async {
     // Ensure permissions
     final status = await requestPermissions();
     debugPrint('FCM permission status: $status');
 
-    // Get and persist token
+    // Check existing token first, only fetch new one if needed
     try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        await AppPrefs.instance.setFcmToken(token);
-        debugPrint('FCM token (init): $token');
+      String? existingToken = AppPrefs.instance.getFcmToken();
+
+      if (existingToken != null && existingToken.isNotEmpty) {
+        debugPrint('FCM token (existing): $existingToken');
+      } else {
+        // No existing token, fetch fresh one
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          await AppPrefs.instance.setFcmToken(token);
+          debugPrint('FCM token (fetched): $token');
+        }
       }
     } catch (e) {
-      debugPrint('FCM token fetch error: $e');
+      debugPrint('FCM token operation error: $e');
     }
 
     // Token refresh
@@ -74,7 +78,8 @@ class FcmService {
     // Listen in foreground
     FirebaseMessaging.onMessage.listen((message) {
       debugPrint('FCM onMessage (foreground): ${message.toMap()}');
-      onForeground?.call(message);
+      // Show local notification when app is in foreground
+      LocalNotificationService().showNotificationFromFCM(message);
     });
 
     // App opened from background via notification tap
@@ -82,7 +87,8 @@ class FcmService {
       debugPrint(
         'FCM onMessageOpenedApp (background->foreground): ${message.toMap()}',
       );
-      onOpenedApp?.call(message);
+      // Navigate based on notification data
+      NotificationRouter.handleMessage(message);
     });
 
     // App opened from terminated via notification tap
@@ -91,7 +97,8 @@ class FcmService {
       debugPrint(
         'FCM getInitialMessage (terminated->opened): ${initial.messageId}',
       );
-      onOpenedApp?.call(initial);
+      // Navigate based on notification data
+      NotificationRouter.handleMessage(initial);
     }
   }
 }
